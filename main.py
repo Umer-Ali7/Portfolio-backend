@@ -10,7 +10,8 @@ from agents import (
     AsyncOpenAI,
     Runner,
     OpenAIChatCompletionsModel,
-    RunConfig
+    RunConfig,
+    SQLiteSession
 )
 
 load_dotenv()
@@ -53,6 +54,8 @@ Your purpose is to act like a helpful coding buddy for learners and developers.
     model=model
 )
 
+session = SQLiteSession("chat_history.db")
+
 # -------------
 #  FASTAPI APP
 # -------------
@@ -81,6 +84,7 @@ async def chat(req: ChatMessage):
     result = await Runner.run(
         agent,
         req.message,
-        run_config=run_config
+        run_config=run_config,
+        session=session
     )
     return {"response": result.final_output}
