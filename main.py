@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 
+
 # OpenAI Agent SDK
 from agents import (
     Agent,
@@ -11,7 +12,9 @@ from agents import (
     Runner,
     OpenAIChatCompletionsModel,
     RunConfig,
-    SQLiteSession
+    SQLiteSession,
+    ModelSettings,
+    function_tool
 )
 
 load_dotenv()
@@ -35,14 +38,26 @@ run_config = RunConfig(
     tracing_disabled=True,
 )
 
+@function_tool
+async def get_portfolio_info():
+    """
+    Returns information about Umer Ali's portfolio, skills, and expertise.
+    """
+    info = """
+    Umer Ali is a full-stack developer specializing in Next.js, TypeScript, React.js,
+    Tailwind CSS, Python, AI and Web Development.
+    He has expertise in problem-solving, debugging code, and concepts related to the OpenAI Agent SDK.
+    """
+    return info
+
 # -------------------------------------------------------
 #  AGENT (your personalized instructions for portfolio)
 # -------------------------------------------------------
 agent = Agent(
-    name="Codizzz Assistant",
+    name="Umer Assistant",
     instructions="""
-You are a highly skilled AI assistant built by a full-stack developer named Umer Ali (Codizzz).
-You help users with Next.js, TypeScript, React.js, Tailwind CSS, Python, AI, Machine Learning,
+You are a highly skilled AI assistant built by a full-stack developer named Umer Ali.
+You help users with Next.js, TypeScript, React.js, Tailwind CSS, Python, AI,
 Web Development, Problem-Solving, Debugging Code, and concepts related to the OpenAI Agent SDK.
 
 Always explain answers clearly, simply, and in a friendly tone.
@@ -51,7 +66,13 @@ If a user asks about AI or backend topics, give practical, real-world explanatio
 
 Your purpose is to act like a helpful coding buddy for learners and developers.
     """,
-    model=model
+    model=model,
+    model_settings=ModelSettings(
+        max_tokens=170,
+        temperature=0.3,
+        ),
+    tools=[get_portfolio_info],
+    
 )
 
 session = SQLiteSession("chat_history.db")
