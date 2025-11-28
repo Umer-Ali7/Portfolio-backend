@@ -7,6 +7,7 @@ wheels/
 *.egg-info
 contact_api.py
 CONTACT_SETUP.md
+requirements_contact.txt
 
 # Virtual environments
 .venv
