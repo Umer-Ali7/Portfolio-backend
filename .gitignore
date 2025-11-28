@@ -5,6 +5,8 @@ build/
 dist/
 wheels/
 *.egg-info
+contact_api.py
+CONTACT_SETUP.md
 
 # Virtual environments
 .venv

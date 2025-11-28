@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import os
 
+# -------- Email Service ----------
+from email_service import send_contact_email
 
-# OpenAI Agent SDK
+# -------- Agent SDK Imports -------
 from agents import (
     Agent,
     AsyncOpenAI,
@@ -19,9 +21,22 @@ from agents import (
 
 load_dotenv()
 
-# ------------------------------
-#  SETUP: Gemini Client + Model
-# ------------------------------
+# =========================================================
+#                  FastAPI App Setup
+# =========================================================
+app = FastAPI(title="Portfolio Full Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =========================================================
+#                GEMINI CLIENT + MODEL
+# =========================================================
 client = AsyncOpenAI(
     api_key=os.getenv("GEMINI_API_KEY"),
     base_url="https://generativelanguage.googleapis.com/v1beta/"
@@ -38,74 +53,107 @@ run_config = RunConfig(
     tracing_disabled=True,
 )
 
+
+# =========================================================
+#                  Portfolio Tool
+# =========================================================
 @function_tool
 async def get_portfolio_info():
-    """
-    Returns information about Umer Ali's portfolio, skills, and expertise.
-    """
     info = """
     Umer Ali is a full-stack developer specializing in Next.js, TypeScript, React.js,
     Tailwind CSS, Python, AI and Web Development.
-    He has expertise in problem-solving, debugging code, and concepts related to the OpenAI Agent SDK.
+    He has expertise in problem-solving, debugging code, and concepts related to Agent SDK.
     """
     return info
 
-# -------------------------------------------------------
-#  AGENT (your personalized instructions for portfolio)
-# -------------------------------------------------------
+
+# =========================================================
+#                       AGENT
+# =========================================================
 agent = Agent(
-    name="Umer Assistant",
+    name="Portfolio Assistant",
     instructions="""
-You are a highly skilled AI assistant built by a full-stack developer named Umer Ali.
-You help users with Next.js, TypeScript, React.js, Tailwind CSS, Python, AI,
-Web Development, Problem-Solving, Debugging Code, and concepts related to the OpenAI Agent SDK.
+You are Umer Ali's AI portfolio assistant.
 
-Always explain answers clearly, simply, and in a friendly tone.
-If a user asks for code, provide clean and optimized code.
-If a user asks about AI or backend topics, give practical, real-world explanations.
+# Responsibilities
+- Answer portfolio questions
+- Help with coding and debugging
+- Assist with Agent SDK topics
+- Provide clean working code
 
-Your purpose is to act like a helpful coding buddy for learners and developers.
+Always call get_portfolio_info() when asked about Umer.
     """,
     model=model,
     model_settings=ModelSettings(
         max_tokens=170,
         temperature=0.3,
-        ),
+    ),
     tools=[get_portfolio_info],
-    
 )
 
 session = SQLiteSession("chat_history.db")
 
-# -------------
-#  FASTAPI APP
-# -------------
-app = FastAPI()
-
-# CORS (Frontend <-> Backend)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# =========================================================
+#                     ROUTES
+# =========================================================
 
 @app.get("/")
 def home():
-    return {"message": "Codizzz AI Assistant Backend is running!"}
+    return {"message": "Merged Portfolio Backend is running!"}
 
-# Request Schema
+
+# ----------------------------
+#     CHATBOT ROUTE
+# ----------------------------
 class ChatMessage(BaseModel):
     message: str
 
-# Chat Endpoint
 @app.post("/chat")
 async def chat(req: ChatMessage):
     result = await Runner.run(
         agent,
         req.message,
         run_config=run_config,
-        session=session
+        session=session,
     )
     return {"response": result.final_output}
+
+
+
+# ----------------------------
+#     CONTACT FORM ROUTE
+# ----------------------------
+class ContactFormData(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    email: str
+    subject: str = Field(..., min_length=1, max_length=200)
+    message: str = Field(..., min_length=1, max_length=2000)
+
+@app.post("/contact")
+async def contact_form(form_data: ContactFormData):
+    try:
+        success = await send_contact_email(
+            sender_name=form_data.name,
+            sender_email=form_data.email,
+            subject=form_data.subject,
+            message=form_data.message
+        )
+
+        if success:
+            return {"success": True, "message": "Your message has been sent!"}
+        else:
+            raise HTTPException(500, "Failed to send email.")
+
+    except Exception as e:
+        print("Contact Error:", e)
+        raise HTTPException(500, "Internal Server Error")
+
+
+
+# =========================================================
+#               LOCAL DEV SERVER (optional)
+# =========================================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
