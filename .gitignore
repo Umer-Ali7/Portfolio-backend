@@ -8,6 +8,7 @@ wheels/
 contact_api.py
 CONTACT_SETUP.md
 requirements_contact.txt
+.env
 
 # Virtual environments
 .venv
