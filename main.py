@@ -38,14 +38,15 @@ app.add_middleware(
 #                GEMINI CLIENT + MODEL
 # =========================================================
 client = AsyncOpenAI(
-    api_key=os.getenv("GEMINI_API_KEY"),
-    base_url="https://generativelanguage.googleapis.com/v1beta/"
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1"
 )
 
 model = OpenAIChatCompletionsModel(
-    openai_client=client,
-    model="gemini-2.0-flash"
+    model="openai/gpt-oss-120b",  # Ya llama3-groq-70b-tool-use
+    openai_client=client
 )
+
 
 run_config = RunConfig(
     model=model,
