@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from mangum import Mangum
 import os
 
 # -------- Email Service ----------
@@ -150,7 +151,7 @@ async def contact_form(form_data: ContactFormData):
         raise HTTPException(500, "Internal Server Error")
 
 
-
+handler = Mangum(app, lifespan="off")  # ye line zaroori hai
 # =========================================================
 #               LOCAL DEV SERVER (optional)
 # =========================================================

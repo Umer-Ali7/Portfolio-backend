@@ -155,3 +155,4 @@ urllib3==2.6.2
     #   types-requests
 uvicorn==0.38.0
     # via mcp
+mangum==0.17.0
