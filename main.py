@@ -43,7 +43,7 @@ client = AsyncOpenAI(
 )
 
 model = OpenAIChatCompletionsModel(
-    model="llama-3-groq-70b-8192-tool-use-preview",  # Ya llama3-groq-70b-tool-use
+    model="openai/gpt-oss-120b",  # Ya llama3-groq-70b-tool-use
     openai_client=client
 )
 
