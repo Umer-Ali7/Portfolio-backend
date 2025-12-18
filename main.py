@@ -93,7 +93,9 @@ Always call get_portfolio_info() when asked about Umer.
     tools=[get_portfolio_info],
 )
 
-session = SQLiteSession("chat_history.db")
+# Use /tmp directory for SQLite on Vercel (serverless-compatible)
+# /tmp is the only writable directory in Vercel's serverless environment
+session = SQLiteSession("/tmp/chat_history.db")
 
 # =========================================================
 #                     ROUTES
