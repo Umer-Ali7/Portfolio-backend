@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from mangum import Mangum
 import os
 import sys
 import traceback
@@ -208,13 +207,9 @@ async def contact_form(form_data: ContactFormData):
 
 
 # =========================================================
-#           VERCEL SERVERLESS HANDLER
-# =========================================================
-handler = Mangum(app, lifespan="off")
-
-# =========================================================
-#               LOCAL DEV SERVER (optional)
+#               RUN SERVER
 # =========================================================
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
